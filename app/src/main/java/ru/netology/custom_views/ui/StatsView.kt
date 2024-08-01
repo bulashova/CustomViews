@@ -26,6 +26,7 @@ class StatsView @JvmOverloads constructor(
     private var lineWidth = AndroidUtils.dp(context, 5F).toFloat()
     private var fontSize = AndroidUtils.dp(context, 40F).toFloat()
     private var colors = emptyList<Int>()
+    private var colorNotFilled = 0
 
     init {
         context.withStyledAttributes(attrs, R.styleable.StatsView) {
@@ -33,6 +34,8 @@ class StatsView @JvmOverloads constructor(
             fontSize = getDimension(R.styleable.StatsView_fontSize, fontSize)
             val resId = getResourceId(R.styleable.StatsView_colors, 0)
             colors = resources.getIntArray(resId).toList()
+            val resNotFilledId = getResourceId(R.styleable.StatsView_colorNotFilled, 0)
+            colorNotFilled = resources.getInteger(resNotFilledId)
         }
     }
 
@@ -47,6 +50,21 @@ class StatsView @JvmOverloads constructor(
         textAlign = Paint.Align.CENTER
         textSize = fontSize
     }
+
+    private val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = lineWidth
+        strokeCap = Paint.Cap.ROUND
+        color = colors.first()
+    }
+
+    private val circlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = lineWidth
+        strokeCap = Paint.Cap.ROUND
+        color = colorNotFilled
+    }
+
 
     var data: List<Float> = emptyList()
         set(value) {
@@ -68,6 +86,8 @@ class StatsView @JvmOverloads constructor(
             return
         }
 
+        canvas.drawCircle(center.x, center.y, radius, circlePaint)
+
         var startFrom = -90F
         for ((index, datum) in data.withIndex()) {
             val angle = 360F * datum
@@ -75,6 +95,8 @@ class StatsView @JvmOverloads constructor(
             canvas.drawArc(oval, startFrom, angle, false, paint)
             startFrom += angle
         }
+
+        canvas.drawPoint(center.x, center.y - radius, dotPaint)
 
         canvas.drawText(
             "%.2f%%".format(data.sum() * 100),
